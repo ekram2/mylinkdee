@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📚 Smart Link Manager Pro</title>
+  <meta name="description" content="Advanced link manager with analytics and smart organization">
+  
+  <!-- PWA Configuration -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/icons/icon-192.png">
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tailwindcss/forms@0.5.6/dist/forms.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4f46e5',
+            dark: {
+              850: '#1e293b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 font-sans min-h-screen transition-colors duration-200">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <!-- App Header -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+          <span aria-hidden="true">📚</span>
+          <span>Smart Link Manager Pro</span>
+        </h1>
+        <p class="text-sm opacity-75">Organize, analyze, and access your links smarter</p>
+      </div>
+      
+      <div class="flex flex-wrap gap-2 items-center">
+        <!-- User Auth Section -->
+        <div id="userInfo" class="flex items-center gap-2">
+          <span id="userEmail" class="text-sm opacity-75 truncate max-w-[120px]"></span>
+          <button id="signInBtn" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 rounded text-sm transition-colors">
+            Sign In
+          </button>
+          <button id="signOutBtn" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm transition-colors hidden">
+            Sign Out
+          </button>
+        </div>
+        
+        <!-- Theme Toggle -->
+        <button id="themeToggle" aria-label="Toggle theme" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm flex items-center gap-1 transition-colors">
+          <span class="theme-icon">🌙</span>
+          <span class="theme-text hidden sm:inline">Dark</span>
+        </button>
+        
+        <!-- Help Button -->
+        <button id="helpBtn" aria-label="Keyboard shortcuts" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm transition-colors">
+          <span class="hidden sm:inline">Help</span>
+          <span class="sm:hidden">⌨️</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Search and Toolbar -->
+    <section class="sticky top-0 z-10 bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm py-3 -mx-4 px-4 border-b border-gray-200 dark:border-gray-700">
+      <div class="flex flex-col md:flex-row gap-3 mb-4">
+        <!-- Search Input -->
+        <div class="relative flex-grow">
+          <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="🔍 Search links or #tags..." 
+            aria-label="Search links"
+            class="w-full p-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+          >
+          <kbd class="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded hidden md:block">Ctrl+K</kbd>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex gap-2">
+          <button id="exportJson" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm flex items-center gap-1 transition-colors">
+            <span>📤</span>
+            <span class="hidden sm:inline">Export</span>
+          </button>
+          <label class="cursor-pointer px-3 py-2 bg-yellow-600 hover:bg-yellow-700 rounded text-sm flex items-center gap-1 transition-colors">
+            <span>📁</span>
+            <span class="hidden sm:inline">Import</span>
+            <input type="file" id="importJson" accept=".json" class="hidden">
+          </label>
+        </div>
+      </div>
+      
+      <!-- Stats Bar -->
+      <div id="statsBar" class="flex flex-wrap gap-4 text-sm pb-2">
+        <div class="flex items-center gap-1">
+          <span class="font-medium">Total:</span>
+          <span id="totalCount">0</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="font-medium">Clicks:</span>
+          <span id="totalClicks">0</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="font-medium">Folders:</span>
+          <span id="folderCount">0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Content Area -->
+    <main>
+      <!-- Add New Item Form -->
+      <section class="bg-white dark:bg-gray-800 p-4 rounded-lg mb-6 shadow-lg border border-gray-200 dark:border-gray-700 transition-colors">
+        <form id="addItemForm" class="grid gap-3 md:grid-cols-10 items-end">
+          <div class="md:col-span-4">
+            <label for="itemTitle" class="block text-sm mb-1 opacity-75">Title</label>
+            <input 
+              type="text" 
+              id="itemTitle" 
+              placeholder="My Resource" 
+              required
+              class="w-full p-2 rounded bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+            >
+          </div>
+          
+          <div class="md:col-span-4">
+            <label for="itemUrl" class="block text-sm mb-1 opacity-75">URL (optional)</label>
+            <input 
+              type="url" 
+              id="itemUrl" 
+              placeholder="https://example.com" 
+              class="w-full p-2 rounded bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+            >
+          </div>
+          
+          <div class="md:col-span-1">
+            <label for="itemType" class="block text-sm mb-1 opacity-75">Type</label>
+            <select 
+              id="itemType" 
+              class="w-full p-2 rounded bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+            >
+              <option value="link">🔗 Link</option>
+              <option value="heading">📂 Folder</option>
+            </select>
+          </div>
+          
+          <button 
+            type="submit" 
+            class="bg-green-600 hover:bg-green-700 rounded text-white px-4 py-2 font-medium h-[42px] transition-colors"
+          >
+            Add
+          </button>
+        </form>
+      </section>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="text-center py-10 hidden">
+        <div class="text-5xl mb-4" aria-hidden="true">📭</div>
+        <h2 class="text-xl font-medium mb-2">No links yet</h2>
+        <p class="text-gray-500 dark:text-gray-400 max-w-md mx-auto">Add your first link or folder using the form above</p>
+      </div>
+      
+      <!-- Links Container -->
+      <section id="linksContainer" class="space-y-3"></section>
+    </main>
+  </div>
+
+  <!-- Keyboard Shortcuts Modal -->
+  <div id="helpModal" class="hidden fixed inset-0 bg-black/70 z-50 grid place-items-center p-4 backdrop-blur-sm">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-xl transition-colors">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Keyboard Shortcuts</h2>
+        <button id="closeHelp" class="text-2xl hover:text-primary transition-colors" aria-label="Close">
+          &times;
+        </button>
+      </div>
+      <ul class="space-y-3">
+        <li class="flex justify-between items-center">
+          <span>Focus search</span>
+          <span class="flex gap-1">
+            <kbd class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">Ctrl</kbd>
+            <kbd class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">K</kbd>
+          </span>
+        </li>
+        <li class="flex justify-between items-center">
+          <span>New item</span>
+          <kbd class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">N</kbd>
+        </li>
+        <li class="flex justify-between items-center">
+          <span>Toggle theme</span>
+          <kbd class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">T</kbd>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script type="module" src="/js/app.js"></script>
+  
+  <!-- Critical JavaScript -->
+  <script>
+    // Theme initialization
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('searchInput').focus();
+      }
+      if (e.key === 'n' && !e.ctrlKey) {
+        document.getElementById('itemTitle').focus();
+      }
+      if (e.key === 't' && !e.ctrlKey) {
+        document.getElementById('themeToggle').click();
+      }
+    });
+
+    // Modal controls
+    document.getElementById('helpBtn').addEventListener('click', () => {
+      document.getElementById('helpModal').classList.remove('hidden');
+    });
+    
+    document.getElementById('closeHelp').addEventListener('click', () => {
+      document.getElementById('helpModal').classList.add('hidden');
+    });
+  </script>
+</body>
+</html>
